@@ -7,6 +7,8 @@
 /* strtol */
 #include <stdio.h>
 
+#include <omp.h>
+
 static int
 csort(unsigned const k,
       unsigned const n,
@@ -18,9 +20,20 @@ csort(unsigned const k,
     return -1;
   }
 
+double const ts = omp_get_wtime();
+
+# pragma omp parallel num_threads(4)
+{
+# pragma omp for
   for (unsigned i = 0; i < n; i++) {
+#   pragma omp critical
+{
     count[in[i]]++;
+}
   }
+}
+double const te = omp_get_wtime();
+printf("elapsed time: %lf\n", te - ts);
 
   unsigned total = 0;
   for (unsigned i = 0; i <= k; i++) {
@@ -29,10 +42,22 @@ csort(unsigned const k,
     total += counti;
   }
 
+double const ts1 = omp_get_wtime();
+# pragma omp parallel num_threads(4)
+{
+# pragma omp for
   for (unsigned i = 0; i < n; i++) {
+  # pragma omp critical
+  {
     out[count[in[i]]] = in[i];
+   //# pragma omp atomic update
     count[in[i]]++;
   }
+  }
+}
+
+  double const te1 = omp_get_wtime();
+  printf("elapsed time 2: %lf\n", te1 - ts1);
 
   free(count);
 
@@ -45,7 +70,7 @@ main(int argc, char *argv[]) {
   unsigned n = strtol(argv[1], NULL, 10);
 
   /* Get key size from command line */
-  unsigned k = strtol(argv[1], NULL, 10);
+  unsigned k = strtol(argv[2], NULL, 10);
 
   /* Allocate memory */
   unsigned * const a = malloc(n * sizeof(*a));
