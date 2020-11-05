@@ -22,16 +22,12 @@ csort(unsigned const k,
 
 double const ts = omp_get_wtime();
 
-# pragma omp parallel num_threads(4)
-{
-# pragma omp for
+# pragma omp parallel for
   for (unsigned i = 0; i < n; i++) {
-#   pragma omp critical
-{
+#   pragma omp atomic
     count[in[i]]++;
 }
-  }
-}
+
 double const te = omp_get_wtime();
 printf("elapsed time: %lf\n", te - ts);
 
@@ -43,16 +39,12 @@ printf("elapsed time: %lf\n", te - ts);
   }
 
 double const ts1 = omp_get_wtime();
-# pragma omp parallel num_threads(4)
-{
-# pragma omp for
+# pragma omp parallel for
   for (unsigned i = 0; i < n; i++) {
   # pragma omp critical
   {
     out[count[in[i]]] = in[i];
-   //# pragma omp atomic update
     count[in[i]]++;
-  }
   }
 }
 
